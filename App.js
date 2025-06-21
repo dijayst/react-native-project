@@ -1,6 +1,8 @@
 
 import VideoRecordingScreen from './src/components/VideoRecordingScreen';
 
+import VideoFeedScreen from './src/components/VideoFeedScreen';
+
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from "@react-navigation/native";
@@ -68,7 +70,7 @@ function HomeScreen({ navigation }) {
        <Text
          style={{ textAlign: "center", color: "red" }}
          onPress={() =>
-           navigation.navigate("Video")
+           navigation.navigate("VideoFeedScreen")
          }
        >
          Video
@@ -86,6 +88,8 @@ export default function App() {
      <Stack.Navigator>
        <Stack.Screen name="Home" component={HomeScreen} />
        <Stack.Screen name="VideoRecordingScreen" component={VideoRecordingScreen}/>
+       
+       <Stack.Screen name="VideoFeedScreen" component={VideoFeedScreen}/>
      </Stack.Navigator>
    </NavigationContainer>
   );
