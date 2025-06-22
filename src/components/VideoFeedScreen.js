@@ -102,13 +102,13 @@ const renderMediaItem = ({ item }) => {
 
 const renderMediaItem = ({ item }) => {
   const style = {
-    width: "20%",
-    height: height,
-    marginBottom: 6,
+    width: "100%",
+    height: height, 
   };
   const videoUri = item.cloudinaryUrl || item.localUri;
 
-  return (
+  return (<View>
+    {videoUri ?(
     <Video
       source={{ uri: videoUri }}
       rate={1.0}
@@ -116,9 +116,10 @@ const renderMediaItem = ({ item }) => {
       isMuted={false}
       resizeMode="cover"
       shouldPlay
-      
+      isLooping
       style={style}
-    />
+    />):(<Text>failed to load</Text>)}
+    </View>
   );
 };
 
@@ -159,13 +160,13 @@ data={mediaFeed}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fffff',
+    backgroundColor: '#000000',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'green',
+    backgroundColor: 'black',
     paddingHorizontal: 40,
   },
   emptyText: {

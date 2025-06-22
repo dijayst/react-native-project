@@ -304,6 +304,10 @@ export default function VideoRecordingScreen () {
           onValueChange={(value) => setZoom(value)}
         />
         <View style={styles.buttonContainer}>
+
+           <TouchableOpacity style={styles.close} onPress={() => navigation.navigate("Home")}>
+            <Ionicons name="close" size={20} color="white" />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
             <Ionicons name="camera-reverse-outline" size={20} color="white" />
           </TouchableOpacity>
@@ -380,6 +384,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignSelf: "flex-end",
     alignItems: "center",
+  },
+  close:{
+   marginTop:60,
   },
   btnContainer: {
     display: "flex",
