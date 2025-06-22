@@ -103,7 +103,9 @@ const renderMediaItem = ({ item }) => {
 const renderMediaItem = ({ item }) => {
   const style = {
     width: "100%",
-    height: height, 
+    height: height,
+    marginBottom: 6,
+   
   };
   const videoUri = item.cloudinaryUrl || item.localUri;
 
@@ -115,7 +117,6 @@ const renderMediaItem = ({ item }) => {
       volume={1.0}
       isMuted={false}
       resizeMode="cover"
-      shouldPlay
       isLooping
       style={style}
     />):(<Text>failed to load</Text>)}
@@ -160,7 +161,7 @@ data={mediaFeed}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#fff',
   },
   emptyContainer: {
     flex: 1,
