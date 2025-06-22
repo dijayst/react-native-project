@@ -10,7 +10,7 @@ const cld = new Cloudinary({
 });
 
 
-
+*/
 
 
 export const uploadVideoToCloudinary = async (videoUri, onProgress) => {
@@ -114,7 +114,6 @@ export const uploadVideoWithRetry = async (videoUri, onProgress, maxRetries = 3)
 };
 
 
-*/
 
 
 
@@ -122,72 +121,3 @@ export const uploadVideoWithRetry = async (videoUri, onProgress, maxRetries = 3)
 
 
 
-
-
-
-
-
-
-
-export const uploadVideoToCloudinary = async (videoUri, onProgress) => {
-  try {
-    const options = {
-      upload_preset: 'lightoheightcloud',
-      resource_type: 'video',
-      folder: 'video_feed',
-      eager: [
-        {
-          streaming_profile: 'hd',
-          format: 'm3u8',
-        },
-      ],
-      eager_async: true,
-      notification_url: 'YOUR_WEBHOOK_URL',
-    };
-
-    const formData = new FormData();
-    formData.append('file', {
-      uri: videoUri,
-      type: 'video/mp4',
-      name: `video_${Date.now()}.mp4`,
-    });
-
-    Object.keys(options).forEach((key) => {
-      formData.append(key, key === 'eager' ? JSON.stringify(options[key]) : options[key]);
-    });
-
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable && onProgress) {
-          const progress = Math.round((event.loaded / event.total) * 100);
-          onProgress(progress);
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status === 200) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            resolve(response);
-          } catch (error) {
-            reject(new Error('Invalid response format'));
-          }
-        } else {
-          reject(new Error(`Upload failed with status: ${xhr.status}`));
-        }
-      });
-
-      xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
-      xhr.addEventListener('timeout', () => reject(new Error('Upload timeout')));
-
-      xhr.open('POST', 'https://api.cloudinary.com/v1_1/dqxy4qsre/video/upload');
-      xhr.timeout = 60000;
-      xhr.send(formData);
-    });
-  } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    throw error;
-  }
-};

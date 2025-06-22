@@ -1,4 +1,5 @@
-import { CameraView, Camera } from "expo-camera";
+import { CameraView, Camera,useCameraPermissions } from "expo-camera";
+import { useState, useRef, useEffect } from "react";
 import {
   Button,
   StyleSheet,
@@ -6,22 +7,32 @@ import {
   TouchableOpacity,
   View,
   SafeAreaView,
-  Image,
+  Image,Dimensions,Alert
 } from "react-native";
-
-//import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { useState,useRef,useEffect } from 'react';
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import * as MediaLibrary from "expo-media-library";
 import Slider from "@react-native-community/slider";
 
-
-export default function VideoRecordingScreen() {
-
+import { useVideo } from '../context/VideoContext';
 
 
-    const [cameraPermission, setCameraPermission] = useState(); //State variable for camera permission
+const { width, height } = Dimensions.get('window');
+const RECORD_TIME_LIMIT = 15000; // 15 seconds
+
+export default function VideoRecordingScreen () {
+
+ const [recordTime, setRecordTime] = useState(0);
+   const cameraRef = useRef(null);
+ const [isRecording, setIsRecording] = useState(false);
+ const recordingTimer = useRef(null);
+
+
+
+
+
+
+  const [cameraPermission, setCameraPermission] = useState(); //State variable for camera permission
   const [mediaLibraryPermission, setMediaLibraryPermission] = useState(); //State variable for media library permission
   const [micPermission, setMicPermission] = useState(); //// state variable for microphone permission
   const [cameraMode, setCameraMode] = useState("picture"); //State variable for picture or video. By default it will be for picture
@@ -29,15 +40,14 @@ export default function VideoRecordingScreen() {
   const [photo, setPhoto] = useState(); //After picture is taken this state will be updated with the picture
   const [video, setVideo] = useState(); //After video is recorded this state will be updated
   const [flashMode, setFlashMode] = useState("on"); //Camera Flash will be ON by default
-  const [recording, setRecording] = useState(false); //State will be true when the camera will be recording
+  //const [recording, setRecording] = useState(false); //State will be true when the camera will be recording
   const [zoom, setZoom] = useState(0); //State to control the digital zoom
-  let cameraRef = useRef(); //Creates a ref object and assigns it to the variable cameraRef.
+ // let cameraRef = useRef(); //Creates a ref object and assigns it to the variable cameraRef.
   const navigation = useNavigation();
-
-
-
+ const { addVideo } = useVideo();
+ const [permission, requestPermission] = useCameraPermissions()
   //When the screen is rendered initially the use effect hook will run and check if permission is granted to the app to access the Camera, Microphone and Media Library.
-  useEffect(() => {
+ /* useEffect(() => {
     (async () => {
       const cameraPermission = await Camera.requestCameraPermissionsAsync();
       const mediaLibraryPermission =
@@ -65,6 +75,12 @@ export default function VideoRecordingScreen() {
     );
   }
 
+
+
+  */
+
+
+   
   //Function to toggle between back and front camera
   function toggleCameraFacing() {
     setFacing((current) => (current === "back" ? "front" : "back"));
@@ -75,34 +91,45 @@ export default function VideoRecordingScreen() {
     setFlashMode((current) => (current === "on" ? "off" : "on"));
   }
 
-  
-  
   //Function to capture picture
-  let takePic = async () => {
-    //Declares takePic as an asynchronous function using the async keyword.
-    let options = {
-      quality: 1, //Specifies the quality of the captured image. A value of 1 indicates maximum quality, whereas lower values reduce quality (and file size).
-      base64: true, //Includes the image's Base64 representation in the returned object. This is useful for embedding the image directly in data URIs or for immediate upload to servers.
-      exif: false, //Disables the inclusion of EXIF metadata in the image (e.g., location, device info). Setting this to true would include such metadata.
+  const takePic = async () => {
+  if (!cameraRef.current) return;
+
+  try {
+    const options = {
+      quality: 1,
+      base64: false, // not needed unless you want to use it in memory
+      exif: false,
     };
 
-    let newPhoto = await cameraRef.current.takePictureAsync(options); //Refers to the camera instance (set using a ref in React). This is used to call methods on the camera.
-    //Captures an image with the specified options and returns a promise that resolves to an object containing: URI and Base64 string and/or EXIF data, based on the provided options.
-    setPhoto(newPhoto); //Update photo state with the new photo object
-  };
+    const newPhoto = await cameraRef.current.takePictureAsync(options);
+    setPhoto(newPhoto);
+
+    // ✅ Save to Media Library
+    const asset = await MediaLibrary.createAssetAsync(newPhoto.uri);
+    console.log("Photo saved:", asset.uri);
+
+    // ✅ Optional: show feedback
+    Alert.alert("Photo Saved", "Your photo has been saved to the media library.");
+
+    // Clear photo preview if you don’t want to show it
+    setPhoto(undefined);
+  } catch (error) {
+    console.error("Error taking/saving picture:", error);
+    Alert.alert("Error", "Failed to capture or save the picture.");
+  }
+};
+
 
   //After the picture is captured it will be displayed to the user and the user will also be provided the option to save or discard the image
-  if (photo) {
+ /* if (photo) {
     let savePhoto = () => {
       MediaLibrary.saveToLibraryAsync(photo.uri).then(() => {
         setPhoto(undefined);
       });
     };
 
-
-
-
-     return (
+    return (
       <SafeAreaView style={styles.imageContainer}>
         <Image style={styles.preview} source={{ uri: photo.uri }} />
         <View style={styles.btnContainer}>
@@ -121,15 +148,9 @@ export default function VideoRecordingScreen() {
       </SafeAreaView>
     );
   }
-
-
-
-
-
-
-
-  
+*/
   //Video Recorder
+  /*
   async function recordVideo(){
     setRecording(true); //Updates the recording state to true. This will also toggle record button to stop button.
     cameraRef.current.recordAsync({ //cameraRef is a useRef hook pointing to the camera component. It provides access to the camera's methods, such as recordAsync. Starts recording a video and returns a Promise that resolves with the recorded video’s details.
@@ -142,20 +163,129 @@ export default function VideoRecordingScreen() {
     console.log(video.uri)
   }
 
+
+
+
+
+
   function stopRecording(){
     setRecording(false);
     cameraRef.current.stopRecording();
     console.log("Recording stopped");
   }
 
-  
   if(video) {
     let uri = video.uri;
     navigation.navigate("Video", {uri})
   }
   //We will design the camera UI first
+
+
+*/
+
+
+
+
+
+
+
+
+
+   useEffect(() => {
+    return () => {
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+      }
+
+      if (!permission) {
+    // Camera permissions are still loading.
+    return <View />;
+  }
+
+  if (!permission.granted) {
+    // Camera permissions are not granted yet.
+    return (
+      <View style={styles.container}>
+        <Text style={styles.message}>We need your permission to show the camera</Text>
+        <Button onPress={requestPermission} title="grant permission" />
+      </View>
+    );
+  }
+    };
+  }, []);
+
+  const recordVideo = async () => {
+    if (!cameraRef.current) return;
+
+    try {
+      setIsRecording(true);
+      setRecordTime(0);
+
+      // Start timer
+      recordingTimer.current = setInterval(() => {
+        setRecordTime(prev => {
+          const newTime = prev + 100;
+          if (newTime >= RECORD_TIME_LIMIT) {
+            stopRecording();
+            return RECORD_TIME_LIMIT;
+          }
+          return newTime;
+        });
+      }, 100);
+
+      const options = {
+       // quality: Camera.Constants.VideoQuality['720p'],
+        maxDuration: 15,
+        videoBitrate: 2000000,
+      };
+
+      const data = await cameraRef.current.recordAsync(options);
+      console.log('Recording completed:', data);
+      
+      // Add video to context
+      await addVideo(data);
+      
+      Alert.alert(
+        'Video Recorded!',
+        'Your video is being uploaded. You can view it in the feed.',
+        [
+          { text: 'Record Another', style: 'cancel' },
+          //{ text: 'View Feed', onPress: onNavigateToFeed },
+        ]
+      );
+    } catch (error) {
+      console.error('Recording error:', error);
+      Alert.alert('Recording Error', 'Failed to record video. Please try again.');
+    }
+  };
+
+
+
+
+  const stopRecording = () => {
+    if (cameraRef.current && isRecording) {
+      cameraRef.current.stopRecording();
+    }
+    setIsRecording(false);
+    if (recordingTimer.current) {
+      clearInterval(recordingTimer.current);
+      recordingTimer.current = null;
+    }
+  };
+
+  
+
+  const formatTime = (milliseconds) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  
   return (
     <View style={styles.container}>
+      
       <CameraView
         style={styles.camera}
         facing={facing}
@@ -204,7 +334,8 @@ export default function VideoRecordingScreen() {
             <TouchableOpacity style={styles.button} onPress={takePic}>
               <Ionicons name="aperture-outline" size={40} color="white" />
             </TouchableOpacity>
-          ) : recording ? (
+          ) : isRecording ? (
+            
             <TouchableOpacity style={styles.button} onPress={stopRecording}>
               <Ionicons name="stop-circle-outline" size={40} color="red" />
             </TouchableOpacity>
@@ -215,6 +346,7 @@ export default function VideoRecordingScreen() {
           )}
         </View>
       </CameraView>
+    
     </View>
   );
 }
@@ -273,5 +405,28 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "white",
+  },
+  timerContainer: {
+    position: 'absolute',
+    top: 60,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  timerText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
+  recordingIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ff0000',
   },
 });
